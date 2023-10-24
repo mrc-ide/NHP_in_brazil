@@ -1,4 +1,5 @@
 # a script for examining fitting a NHP in one region
+# loading libraries
 library(mcstate)
 library(odin.dust)
 
@@ -7,12 +8,12 @@ library(odin.dust)
 pop_dens <- 10 # based on density in Culot et al. Botacatu and others
 area <- 248219 #based on Sao Paulo state
 
-pop_size <- pop_dens * area
+pop_size <- pop_dens * area #assume similar across the region *assumption*
 
-# load data
+# load example data
 df_tidy <- read.csv(system.file("sir_incidence.csv", package="mcstate")) # this is just example data from the package
 
-# move n to start so mcstate knows where to look
+# turn into data object
 data <- mcstate::particle_filter_data(df_tidy, 
                                       time = "day",
                                       rate = 1,
@@ -21,32 +22,37 @@ data <- mcstate::particle_filter_data(df_tidy,
 # sir model
 sir <- odin.dust::odin_dust("sir.R") # standard SIR model
 
-source("compare_sir.R") # this is a simple poisson likelihood with random noise added - observation process could appear here
+# sourcing the compare function which defines what to fit to and how- here it is assuming a poisson likelihood
+# sourcing the index function- this tells mcstate which model and data outputs to look for
+source("compare_sir.R") # observation process could also appear here
 source("index_sir.R")
 
-#parms
-pars <- list(beta = 0.25, gamma = 0.2) #leave others as defaults
-mod <- sir$new(pars, 0, 100)
+#parameteres
+pars <- list(beta = 0.25, gamma = 0.2, S0 = pop_size) #leave others as defaults
+mod <- sir$new(pars, 0, max(data$time_end)) 
 y <- mod$simulate(c(0, data$time_end))
 
-filter <- mcstate::particle_filter$new(data, model = sir, n_particles=100,
-                                       compare = compare, index = index) #just constructs the object
+filter <- mcstate::particle_filter$new(data, 
+                                       model = sir, 
+                                       n_particles=100,
+                                       compare = compare, 
+                                       index = index) #just constructs the object
 
-
+#now running just the particle filter- this will probably not align with the data
 filter$run(pars, save_history = TRUE)
-h <- filter$history(1)
+h <- filter$history(1) #pull just one particle out
 dim(h) # dimension of the index and time dimension at the places where you told it to output
 
-plot(h["I", , ])
+plot(h["I", , ]) # showing a plot of the particle filter only
 
-h <- filter$history()
+h <- filter$history() #now pull all particles
 
 matplot(h["t", 1, ], t(h["cases", , ]), type = "l", col = "#00000011", 
         xlab = "Day", ylab = "Cases", las = 1)
-points(cases ~ day, df_tidy, pch = 19, col = "red")  
+points(cases ~ day, df_tidy, pch = 19, col = "red")  #compare to the data
 
 matplot(h["t", 1, ], t(h["I", , ]), type = "l", col = "#00000011", 
-        xlab = "Day", ylab = "Number of infecteds (I)", las = 1)
+        xlab = "Day", ylab = "Number of infecteds (I)", las = 1) #now plotting underlying infections
 
 # now for the fitting
 priors <- list(
@@ -56,7 +62,7 @@ priors <- list(
 
 transform <- function(theta) {
   as.list(theta)
-} # this is about as simple as this could be
+} # this is where you may include a log transform or other
 
 make_transform <- function(I0) {
   function(theta) {
@@ -65,13 +71,15 @@ make_transform <- function(I0) {
          gamma=theta[["gamma"]])
   }
 }
+
+pars <- list(beta=0.25, gamma=0.2)
 no_param <- length(pars)
 
-vcv <- (1e-2) ^ 2 * diag(no_param) / no_param 
+vcv <- (1e-2) ^ 2 * diag(no_param) / no_param # this is for the proposal distribution
 vcv
 transform <- make_transform(10) #then this bounds I0 as 10
 
-mcmc_pars <- mcstate::pmcmc_parameters$new(priors, vcv, transform)
+mcmc_pars <- mcstate::pmcmc_parameters$new(priors, vcv, transform) #getting proposal priors and starting parameters in the correct format
 
 n_steps_in <- 1e3
 
@@ -82,7 +90,7 @@ samples <- mcstate::pmcmc(mcmc_pars, filter, control = control)
 
 #samples
 plot(samples$probabilities[, "log_posterior"], type = "s",
-     xlab = "Sample", ylab = "Log posterior")
+     xlab = "Sample", ylab = "Log posterior") #this shows the chain
 
 
 # plot result
