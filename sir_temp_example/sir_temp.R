@@ -18,13 +18,12 @@ initial(I) <- I0
 initial(cases_cumul) <- 0
 initial(cases_inc) <- 0
 
-beta <- -temp_scale*Temp*(Temp–Temp_0)*(Temp_m–Temp)^0.5 #Briere formulation of Mordecai et al 2017
+beta <- temp_scale*Temp*(Temp-Temp_0)*(Temp_m-Temp)^0.5 #Briere formulation of Mordecai et al 2017
 
 Temp <- user(25) #as input
 Temp_0 <- user(2.9285) #to be estimated (but would need more data - this value is from Gaythorpe et al. 2020)
 Temp_m <- user(40.1368) #to be estimated (but would need more data - this value is from Gaythorpe et al. 2020)
-temp_scale <- user(3e-4) #to be estimated (but would need more data - this value is from Gaythorpe et al. 2020)
-
+temp_scale <- user(3e-4) #to be estimated 
 gamma <- user(0.1) #to be estimated
 I0 <- user(10) #as input
 S0 <- user(1000) #as input 
