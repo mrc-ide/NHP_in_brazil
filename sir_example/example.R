@@ -20,12 +20,12 @@ data <- mcstate::particle_filter_data(df_tidy,
                                       initial_time = 0)
 
 # sir model
-sir <- odin.dust::odin_dust("sir.R") # standard SIR model
+sir <- odin.dust::odin_dust("sir_example/sir.R") # standard SIR model
 
 # sourcing the compare function which defines what to fit to and how- here it is assuming a poisson likelihood
 # sourcing the index function- this tells mcstate which model and data outputs to look for
-source("compare_sir.R") # observation process could also appear here
-source("index_sir.R")
+source("sir_example/compare_sir.R") # observation process could also appear here
+source("sir_example/index_sir.R")
 
 #parameteres
 pars <- list(beta = 0.25, gamma = 0.2, S0 = pop_size) #leave others as defaults
