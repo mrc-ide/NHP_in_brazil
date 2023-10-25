@@ -9,3 +9,9 @@ This is almost exactly the same as the vignette for mcstate. Here we have 4 file
 
 # SIR_temp example
 This is almost identical to the above but the transmission parameter beta now depends nonlinearly on temperature. It means that rather than estimating beta directly, you estimate of the parameters of the function for how beta varies with temperature. This will be more useful as other regions/ municipalities are added.
+
+# SIR temp nested example
+This takes data from two populations, here we are assuming they are two regions or municipalities. The model itself is the same in the two regions but what varies is 1) temperature and 2) the temperature scaling. The nested approach assumes that there is going to be one or more parameters that vary across regions. The data is made up and the model is only run for a small number of iterations as an illustration.
+
+# SIR temp multipatch example
+Here we include a model that has multiple regions or populations. Then in the estimation all the parameters are the same but the temperature varies between regions. Again, the data is made up and the model is only estimated for a small number of iterations for illustration. 
