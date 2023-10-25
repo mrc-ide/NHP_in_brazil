@@ -15,11 +15,11 @@ dt=1.0 #Length of interval between time points in days
 n_pts=length(years_data)*(365.0/dt) #Number of time points to run
 
 #Parameters - NHPs
-R0_NHPs <- 1.3
+R0_NHPs <- rep(0.5*sin(c(1:365)*((2*pi)/365))+0.9,length(years_data))
 pop_dens <- 10 # based on density in Culot et al. Botacatu and others
 area <- 248219 #based on Sao Paulo state
 pop_size <- pop_dens * area #assume similar across the region *assumption*
-pars_NHPs <- list(R0 = R0_NHPs, gamma = 0.1, S0 = pop_size, dt = dt) #leave others as defaults
+pars_NHPs <- list(R0 = R0_NHPs, gamma = 0.1, S0 = pop_size, dt = dt, n_pts = n_pts) #leave others as defaults
 
 #Run NHP model and save and plot output
 {
@@ -44,7 +44,7 @@ pars_NHPs <- list(R0 = R0_NHPs, gamma = 0.1, S0 = pop_size, dt = dt) #leave othe
 FOI_spillover_min=1.0e-8 #Baseline FOI_spillover to which value calculated from NHPs added
 FOI_coeff=1e-5 #Coefficient by which infectious fraction of NHPs multiplied
 FOI_spillover=(NHP_I_fraction*FOI_coeff)+FOI_spillover_min #Total spillover FOI
-R0_human=rep(1.0,n_pts)
+R0_human=rep(0.5*sin(c(1:365)*((2*pi)/365))+0.75,length(years_data))
 year0=years_data[1]
 human_input_data <- readRDS(file = "tests_connect_human_model/input_data_example.Rds")
 vacc_data <- human_input_data$vacc_data[1, human_input_data$years_labels %in% c(year0:(max(years_data)+1)), ]
