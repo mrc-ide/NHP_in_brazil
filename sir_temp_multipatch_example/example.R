@@ -25,7 +25,7 @@ data <- mcstate::particle_filter_data(df_tidy,
                                       time = "day",
                                       rate = 1,
                                       initial_time = 0)
-
+par(mfrow=c(1,1))
 plot(cases_A ~ day, df_tidy,
      type = "o", xlab = "Day", ylab = "New cases", pch = 19)
 lines(cases_B ~ day, df_tidy,
@@ -122,10 +122,9 @@ filter <- mcstate::particle_filter$new(data,
 
 # now for the fitting
 priors <- list(
-  mcstate::pmcmc_parameter("beta", 0.2, min = 0),
-  mcstate::pmcmc_parameter("gamma", 0.1, min = 0, 
+  mcstate::pmcmc_parameter("gamma", 0.2, min = 0, 
                            prior = function(p)  dgamma(p, shape = 1, scale = 0.2, log = TRUE)),
-  mcstate::pmcmc_parameter("temp_scale", 1e-3, min=0))
+  mcstate::pmcmc_parameter("temp_scale", 1e-2, min=0))
 
 transform <- function(theta) {
   as.list(theta)
@@ -136,14 +135,13 @@ make_transform <- function(I0, S0, Temp) {
     list(I0 =I0, #this runs everything with standardised I0 inital infecion
          S0=S0,
          Temp=Temp,
-         beta=theta[["beta"]],
          gamma=theta[["gamma"]],
          temp_scale=theta[["temp_scale"]])
   }
 }
 
-pars <- list(beta=0.25, gamma=0.2, temp_scale = 1e-5)
-no_param <- length(pars)
+
+no_param <- 2
 
 vcv <- (1e-2) ^ 2 * diag(no_param) / no_param # this is for the proposal distribution
 transform <- make_transform(I0=c(10,10), S0=c(pop_size, pop_size), Temp=c(20, 24.5)) #then this bounds I0 as 10
@@ -151,7 +149,7 @@ transform <- make_transform(I0=c(10,10), S0=c(pop_size, pop_size), Temp=c(20, 24
 #getting proposal priors and starting parameters in the correct format
 mcmc_pars <- mcstate::pmcmc_parameters$new(priors, vcv, transform) 
 
-n_steps_in <- 1e4
+n_steps_in <- 1e3
 
 control <- mcstate::pmcmc_control(
   n_steps = n_steps_in,
@@ -169,9 +167,8 @@ plot(samples$probabilities[500:n_steps_in, "log_posterior"], type = "s",
 # run and view
 model <- sir$new(pars = list(N_patch=2,
                              Temp=c(20,24.5),
-                             temp_scale=samples$pars[1000,3],
-                             beta = samples$pars[1000,1],
-                             gamma = samples$pars[1000,2],
+                             temp_scale=samples$pars[n_steps_in,2],
+                             gamma = samples$pars[n_steps_in,1],
                              I0=c(10,10),
                              S0=c(pop_size,pop_size)),
                  time = 1,
@@ -199,3 +196,5 @@ points(time, df_tidy$cases_A, col="red")
 
 matplot(time, t(B), type="l", col = "grey80", ylim=range(df_tidy$cases_B))
 points(time, df_tidy$cases_B, col="red")
+
+samples$pars[n_steps_in,]
