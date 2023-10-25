@@ -15,7 +15,7 @@ dt=1.0 #Length of interval between time points in days
 n_pts=length(years_data)*(365.0/dt) #Number of time points to run
 
 #Parameters - NHPs
-R0_NHPs <- rep(0.5*sin(c(1:365)*((2*pi)/365))+0.9,length(years_data))
+R0_NHPs <- rep(0.5*sin(c(1:365)*((2*pi)/365))+1.1,length(years_data))
 pop_dens <- 10 # based on density in Culot et al. Botacatu and others
 area <- 248219 #based on Sao Paulo state
 pop_size <- pop_dens * area #assume similar across the region *assumption*
