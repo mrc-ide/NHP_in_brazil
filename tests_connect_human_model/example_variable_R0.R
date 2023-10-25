@@ -11,11 +11,14 @@ source("tests_connect_human_model/R_human.R") #R functions for running human mod
 
 #Common parameters
 years_data=c(1940:2000) #Years of interest
+year0=years_data[1]
 dt=1.0 #Length of interval between time points in days
 n_pts=length(years_data)*(365.0/dt) #Number of time points to run
+dates=year0+(c(1:n_pts)*(dt/365))
 
 #Parameters - NHPs
 R0_NHPs <- rep(0.5*sin(c(1:365)*((2*pi)/365))+1.1,length(years_data))
+matplot(x=dates,y=R0_NHPs,type="l",col=1,xlab="Date",ylab="R0 (NHPs)",ylim=c(0,max(R0_NHPs)))
 pop_dens <- 10 # based on density in Culot et al. Botacatu and others
 area <- 248219 #based on Sao Paulo state
 pop_size <- pop_dens * area #assume similar across the region *assumption*
@@ -30,14 +33,14 @@ pars_NHPs <- list(R0 = R0_NHPs, gamma = 0.1, S0 = pop_size, dt = dt, n_pts = n_p
     mod_NHPs_out[i,]=output_step[c(1,2,4,3),1]
   }
   
-  matplot(x=mod_NHPs_out$time[c(1,n_pts)],y=c(0,max(mod_NHPs_out[c(2:4),])),col=0,xlab="Time",ylab="")
-  matplot(x=mod_NHPs_out$time,y=mod_NHPs_out$S,type="l",col=1,add=TRUE)
-  matplot(x=mod_NHPs_out$time,y=mod_NHPs_out$I,type="l",col=2,add=TRUE)
-  matplot(x=mod_NHPs_out$time,y=mod_NHPs_out$R,type="l",col=3,add=TRUE)
+  matplot(x=dates[c(1,n_pts)],y=c(0,max(mod_NHPs_out[c(2:4),])),col=0,xlab="Time",ylab="")
+  matplot(x=dates,y=mod_NHPs_out$S,type="l",col=1,add=TRUE)
+  matplot(x=dates,y=mod_NHPs_out$I,type="l",col=2,add=TRUE)
+  matplot(x=dates,y=mod_NHPs_out$R,type="l",col=3,add=TRUE)
   legend("bottomleft",legend=c("S","I","R"),col=c(1:3),lty=c(1,1,1))
   
   NHP_I_fraction=mod_NHPs_out$I/pop_size
-  matplot(x=mod_NHPs_out$time,y=NHP_I_fraction,type="l",xlab="Time",ylab="NHP infectious fraction")  
+  matplot(x=dates,y=NHP_I_fraction,type="l",xlab="Time",ylab="NHP infectious fraction")  
 }
 
 #Parameters - human 
@@ -45,7 +48,7 @@ FOI_spillover_min=1.0e-8 #Baseline FOI_spillover to which value calculated from 
 FOI_coeff=1e-5 #Coefficient by which infectious fraction of NHPs multiplied
 FOI_spillover=(NHP_I_fraction*FOI_coeff)+FOI_spillover_min #Total spillover FOI
 R0_human=rep(0.5*sin(c(1:365)*((2*pi)/365))+0.75,length(years_data))
-year0=years_data[1]
+matplot(x=dates,y=R0_human,type="l",col=1,xlab="Date",ylab="R0 (humans)",ylim=c(0,max(R0_human)))
 human_input_data <- readRDS(file = "tests_connect_human_model/input_data_example.Rds")
 vacc_data <- human_input_data$vacc_data[1, human_input_data$years_labels %in% c(year0:(max(years_data)+1)), ]
 pop_data <- human_input_data$pop_data[1, human_input_data$years_labels %in% c(year0:(max(years_data)+1)), ]
@@ -61,7 +64,6 @@ human_model_data <- Human_Model_Run(FOI_spillover,R0_human,vacc_data,pop_data,ye
 YEPaux::plot_model_output(human_model_data)
 
 #Plot spillover and total FOI
-dates=year0+(c(1:n_pts)*(dt/365))
 matplot(x=dates,y=log(FOI_spillover),type="l",col=1,xlab="Date",ylab="Force of infection",
         ylim=c(log(min(FOI_spillover)),log(max(human_model_data$FOI_total[1,]))),yaxt="n")
 matplot(x=dates,y=log(human_model_data$FOI_total[1,]),type="l",col=2,add=TRUE)
