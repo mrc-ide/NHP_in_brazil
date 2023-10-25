@@ -124,7 +124,7 @@ filter <- mcstate::particle_filter$new(data,
 priors <- list(
   mcstate::pmcmc_parameter("gamma", 0.2, min = 0, 
                            prior = function(p)  dgamma(p, shape = 1, scale = 0.2, log = TRUE)),
-  mcstate::pmcmc_parameter("temp_scale", 1e-2, min=0))
+  mcstate::pmcmc_parameter("temp_scale", 1e-3, min=0))
 
 transform <- function(theta) {
   as.list(theta)
@@ -149,7 +149,7 @@ transform <- make_transform(I0=c(10,10), S0=c(pop_size, pop_size), Temp=c(20, 24
 #getting proposal priors and starting parameters in the correct format
 mcmc_pars <- mcstate::pmcmc_parameters$new(priors, vcv, transform) 
 
-n_steps_in <- 1e3
+n_steps_in <- 1e4
 
 control <- mcstate::pmcmc_control(
   n_steps = n_steps_in,
@@ -159,7 +159,7 @@ samples <- mcstate::pmcmc(mcmc_pars, filter, control = control)
 
 par(mfrow = c(1,1))
 #samples
-plot(samples$probabilities[500:n_steps_in, "log_posterior"], type = "s",
+plot(samples$probabilities[100:n_steps_in, "log_posterior"], type = "s",
      xlab = "Sample", ylab = "Log posterior") #this shows the chain
 
 
