@@ -16,3 +16,5 @@ There are stepping stones for including vectors. In an SIR model, they may be in
 
 In the examples here we include only temperature dependence through a simple Briere function (see [Mordecai et al. 2017](https://journals.plos.org/plosntds/article?id=10.1371/journal.pntd.0005568) for functional form and [Gaythorpe et al. 2020](https://elifesciences.org/articles/55619) for application/estimation for yellow fever).
 
+However, it may be important to include other environmental variables such as precipitation, vegetation etc. These can be included in a similar way ie. through the transmission parameter and we would advise, that where there is no information on a fucntional form for the relationship, using a simple linear relationship as a starting point.
+
