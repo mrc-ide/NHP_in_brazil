@@ -31,7 +31,7 @@ source("sir_temp_example/compare_sir_temp.R") # observation process could also a
 source("sir_temp_example/index_sir_temp.R")
 
 #parameteres
-pars <- list(beta = 0.25, gamma = 0.2, S0 = pop_size, Temp=mean_Temp, temp_scale=3e-6) #leave others as defaults
+pars <- list( gamma = 0.2, S0 = pop_size, Temp=mean_Temp, temp_scale=3e-6) #leave others as defaults
 mod <- sir$new(pars, 0, max(data$time_end)) 
 y <- mod$simulate(c(0, data$time_end))
 
@@ -59,7 +59,6 @@ matplot(h["t", 1, ], t(h["I", , ]), type = "l", col = "#00000011",
 
 # now for the fitting
 priors <- list(
-  mcstate::pmcmc_parameter("beta", 0.2, min = 0),
   mcstate::pmcmc_parameter("gamma", 0.1, min = 0, prior = function(p)
     dgamma(p, shape = 1, scale = 0.2, log = TRUE)),
   mcstate::pmcmc_parameter("temp_scale", 1e-5, min=0))
@@ -71,13 +70,12 @@ transform <- function(theta) {
 make_transform <- function(I0) {
   function(theta) {
     list(I0 =I0, #this runs everything with standardised I0 inital infecion
-         beta=theta[["beta"]],
          gamma=theta[["gamma"]],
          temp_scale=theta[["temp_scale"]])
   }
 }
 
-pars <- list(beta=0.25, gamma=0.2, temp_scale = 1e-5)
+pars <- list( gamma=0.2, temp_scale = 1e-5)
 no_param <- length(pars)
 
 vcv <- (1e-2) ^ 2 * diag(no_param) / no_param # this is for the proposal distribution
@@ -98,7 +96,7 @@ plot(samples$probabilities[500:1000, "log_posterior"], type = "s",
      xlab = "Sample", ylab = "Log posterior") #this shows the chain
 
 # plot result
-pars <- list(beta = samples$pars[n_steps_in,1], gamma = samples$pars[n_steps_in,2], temp_scale=samples$pars[n_steps_in,3])
+pars <- list( gamma = samples$pars[n_steps_in,1], temp_scale=samples$pars[n_steps_in,2])
 filter$run(pars, save_history = TRUE)
 h <- filter$history()
 
