@@ -11,3 +11,8 @@ By this, we mean including other compartments. We have only included SIR models 
 ### Including vectors
 
 There are stepping stones for including vectors. In an SIR model, they may be included implicitly in the definition of the transmission parameter. They may also be included in some of the calculations of the incubation periods. The most complicated option is to include another set of compartments to track infection in vectors; however, this would be quickly complicated by including different species and require a variety of new data. It would also make estimation of the model significantly more complex.
+
+## Other environmental variables
+
+In the examples here we include only temperature dependence through a simple Briere function (see [Mordecai et al. 2017](https://journals.plos.org/plosntds/article?id=10.1371/journal.pntd.0005568) for functional form and [Gaythorpe et al. 2020](https://elifesciences.org/articles/55619) for application/estimation for yellow fever).
+
