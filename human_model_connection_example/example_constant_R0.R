@@ -5,11 +5,11 @@ library(YEPaux) #Functions for processing and displaying human model data
 
 # Compiling model code
 # Non-human primate SIR model incorporating mortality
-OD_NHPs <- odin.dust::odin_dust("tests_connect_human_model/OD_NHPs.R") 
+OD_NHPs <- odin.dust::odin_dust("human_model_connection_example/OD_NHPs.R") 
 # Human SEIRV model (version of YEP odin.dust model with time-varying spillover FOI and R0)
-OD_human <- odin.dust::odin_dust("tests_connect_human_model/OD_human.R") 
+OD_human <- odin.dust::odin_dust("human_model_connection_example/OD_human.R") 
 #R functions for running human model (also slightly adapted from YEP)
-source("tests_connect_human_model/R_human.R") 
+source("human_model_connection_example/R_human.R") 
 
 #-------------------------------------------------------------------------------
 #Common parameters
@@ -62,7 +62,7 @@ source("tests_connect_human_model/R_human.R")
   #Total spillover force of infection calculated from NHP model output
   FOI_spillover=(NHP_I_fraction*FOI_coeff)+FOI_spillover_min 
   
-  human_input_data <- readRDS(file = "tests_connect_human_model/input_data_example.Rds") #Input dataset
+  human_input_data <- readRDS(file = "human_model_connection_example/input_data_example.Rds") #Input dataset
   
   #Vaccination and population data data for years of interest and year after
   vacc_data <- human_input_data$vacc_data[1, human_input_data$years_labels %in% c(year0:(max(years_data)+1)), ]
