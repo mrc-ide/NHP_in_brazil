@@ -18,3 +18,11 @@ Here we include a model that has multiple regions or populations. Then in the es
 
 # Human model connection example
 Here we present an example of how a non-human primate model could be used to generate input for a version of the existing human model. A non-human primate SIR model similar to those in previous examples but incorporating a mortality term is run to generate SIR data. The infectious fraction of the NHP population (I/(S+I+R)) is then used to calculate the spillover force of infection affecting the human population as a function of time, via a simple linear calculation. The human model is then run with this input over the same period of time. The basic reproduction number R0 in both NHPs and humans is supplied as a function of time, so it can be constant or incorporate seasonal variation and/or variation from year to year.
+
+## Installation of YEP and YEPaux
+
+```
+#install.packages("devtools")
+devtools::install_github("YEP")
+devtools::install_github("YEPaux")
+```
