@@ -45,12 +45,12 @@ matplot(x=df_tidy_new$day[c(1:t_pts)],y=df_tidy_new$cases[c(1:t_pts)],type="b",c
         xlab="Day",ylab="Cases",ylim=c(0,max(df_tidy_new$cases)))
 matplot(x=df_tidy_new$day[c(1:t_pts)+t_pts],y=df_tidy_new$cases[c(1:t_pts)+t_pts],type="b",col=2,pch=19,add=TRUE)
 
-outputs <- list(example_data_nested = df_tidy, 
+outputs <- list(example_data_nested = df_tidy_new, 
                 parameters_nested = list(log_temp_scale = log_temp_scale, log_gamma = log_gamma, I0 = 10, S0 = pop_size,
                                                                         Temp = Temp, Temp_0 = Temp_0, Temp_m = Temp_m),
                 example_data_single=df_tidy_new[df_tidy_new$population == "A", c(1:2)],
                 parameters_single = list(log_temp_scale = log_temp_scale[1], log_gamma = log_gamma, I0 = 10, S0 = pop_size[1],
                                          Temp = Temp[1], Temp_0 = Temp_0, Temp_m = Temp_m))
-saveRDS(outputs,file = "temperature_dependence_new/example_data.Rds")
+#saveRDS(outputs,file = "temperature_dependence_new/example_data.Rds")
 
 
