@@ -1,5 +1,8 @@
 #Generate example nested data for fitting
-#Population and temperature vary between regions, gamma and temp_scale (multiplier used to calculate beta) constant
+#Population and temperature vary between 2 regions
+#gamma (calculated from log(gamma) to aid fitting) is constant across regions
+#temp_scale is a value used to calculate beta (multiplier of exponential function of temperature)
+#temp_scale (calculated from log(temp_scale) to aid fitting) varies between regions
 
 # Old example data as template
 df_tidy <- read.csv(system.file("nested_sir_incidence.csv", package="mcstate"), stringsAsFactors = TRUE)
@@ -45,6 +48,8 @@ matplot(x=df_tidy_new$day[c(1:t_pts)],y=df_tidy_new$cases[c(1:t_pts)],type="b",c
         xlab="Day",ylab="Cases",ylim=c(0,max(df_tidy_new$cases)))
 matplot(x=df_tidy_new$day[c(1:t_pts)+t_pts],y=df_tidy_new$cases[c(1:t_pts)+t_pts],type="b",col=2,pch=19,add=TRUE)
 
+#Save inputs and outputs - one set for region A to use with example_single.R, one nested set to use with example_nested.R
+#Population and temperature needed for fitting, log_gamma and log_temp_scale used to check success of fit
 outputs <- list(example_data_nested = df_tidy_new, 
                 parameters_nested = list(log_temp_scale = log_temp_scale, log_gamma = log_gamma, I0 = 10, S0 = pop_size,
                                                                         Temp = Temp, Temp_0 = Temp_0, Temp_m = Temp_m),

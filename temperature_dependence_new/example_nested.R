@@ -23,34 +23,11 @@ data <- particle_filter_data(df_tidy, time = "day", rate = 1, initial_time = 0, 
 source("sir_temp_example/compare_sir_temp.R") # observation process could also appear here
 source("sir_temp_example/index_sir_temp.R")
 
-# Demonstrate that original parameters give output matching example data
-n_param_sets=2
-pars=list()
-for(i in 1:n_param_sets){
-  pars[[i]]=list(log_temp_scale = gen_params$log_temp_scale[i], log_gamma = gen_params$log_gamma,I0 = gen_params$I0, S0 = gen_params$S0[i],
-                 Temp = gen_params$Temp[i], Temp_0 = gen_params$Temp_0, Temp_m = gen_params$Temp_m)
-}
-
-x <- sir$new(pars = pars, time = 0, n_particles = 1, n_threads = 1, deterministic = FALSE, pars_multi = TRUE)
-t_pts=nrow(df_tidy)/n_param_sets
-x_res <- array(NA, dim = c(6, n_param_sets, t_pts)) #6 outputs from SIR model - time, S, I, R, cumulative cases, case incidence
-for(step in 1:t_pts){
-  x_res[,,step] <- x$run(step)
-}
-df_tidy_new=df_tidy
-df_tidy_new$cases[df_tidy_new$population=="A"]=x_res[6,1,]
-df_tidy_new$cases[df_tidy_new$population=="B"]=x_res[6,2,]
-
-matplot(x=df_tidy_new$day[c(1:t_pts)],y=df_tidy_new$cases[c(1:t_pts)],type="l",col=1,
-        xlab="Day",ylab="Cases",ylim=c(0,max(c(df_tidy_new$cases,df_tidy$cases))))
-matplot(x=df_tidy_new$day[c(1:t_pts)+t_pts],y=df_tidy_new$cases[c(1:t_pts)+t_pts],type="l",col=2,add=TRUE)
-matplot(x=df_tidy$day[c(1:t_pts)],y=df_tidy$cases[c(1:t_pts)],type="p",pch=1,col=1,add=TRUE)
-matplot(x=df_tidy$day[c(1:t_pts)],y=df_tidy$cases[c(1:t_pts)+t_pts],type="p",pch=1,col=2,add=TRUE)
-legend("topleft",c("A (New)", "B (New)","A (Original)","B (Original)"),col=c(1,2,1,2),lty=c(1,1,0,0),pch=c(NA,NA,1,1))
-
-#
+#Create particle filter
 filter <- particle_filter$new(data,  model = sir, n_particles=100, compare = compare, index = index)
 
+#Set up prior probability distributions and initial, minimum and maximum values for parameters
+#log_gamma has one value common to both regions, log_temp_scale has a different value for each region
 priors <- list(pmcmc_parameter("log_gamma", initial = log(0.25), min = log(0.05), max = log(0.5), prior = function(p)
                                pnorm(p,mean=log(0.1),sd=1,log=TRUE)),
                pmcmc_varied_parameter("log_temp_scale", initial = log(c(1.5e-5,1.5e-5)), populations = c("a", "b"), 
@@ -59,6 +36,7 @@ priors <- list(pmcmc_parameter("log_gamma", initial = log(0.25), min = log(0.05)
                pmcmc_varied_parameter("S0", gen_params$S0, populations = c("a", "b")),
                pmcmc_varied_parameter("Temp", gen_params$Temp, populations = c("a", "b")))
 
+#Transform function for other parameters
 make_transform <- function(I0) {
   function(theta) {
     c(list(I0 = I0), 
@@ -66,6 +44,7 @@ make_transform <- function(I0) {
   }
 }
 
+#Proposal distribution
 proposal_fixed <- (1e-1) ^ 2 * diag(1)
 colnames(proposal_fixed) <- c("log_gamma")
 proposal_varied <- array((1e-1) ^ 2 * diag(3), c(3, 3, 2),
@@ -73,6 +52,7 @@ proposal_varied <- array((1e-1) ^ 2 * diag(3), c(3, 3, 2),
                                          c("log_temp_scale", "S0", "Temp"), 
                                          c("a", "b")))
 
+#MCMC parameters
 mcmc_pars <- pmcmc_parameters_nested$new(
   parameters = priors,
   proposal_varied = proposal_varied,
@@ -81,18 +61,22 @@ mcmc_pars <- pmcmc_parameters_nested$new(
   transform=make_transform(I0 = gen_params$I0)
 ) 
 
+#Set population and temperature for each region to be constant
 mcmc_pars2 <- mcmc_pars$fix(fixed=cbind(a = c(S0=gen_params$S0[1],Temp=gen_params$Temp[1]), 
                                         b = c(S0=gen_params$S0[2],Temp=gen_params$Temp[2]))) 
 
+#MCMC estimation
 n_steps_in <- 1e3
 control <- pmcmc_control(n_steps = n_steps_in, progress = TRUE, save_trajectories=TRUE)
 samples <- pmcmc(mcmc_pars2, filter, control = control)
 
+#Plot posterior likelihood progression over steps
 matplot(x=c(1:nrow(samples$probabilities)),y=rowSums(samples$probabilities[,3,]),type="l",xlab="Iteration",ylab="Posterior likelihood (A+B)")
 title("Posterior likelihood progression")
 
 burnin=0.5*n_steps_in #Value from which to begin taking trajectory case values to plot
 
+#Plot post-burn-in modelled values compared with observed data
 par(mfrow=c(1,2))
 matplot(x=c(1:101),y=t(samples$trajectories$state["cases",1,c(burnin:n_steps_in),]),type="p",pch=16,cex=0.25,col=1,
         ylim=c(0,max(c(samples$trajectories$state["cases",1,c(burnin:n_steps_in),],df_tidy$cases))),xlab="Day",ylab="Cases")
@@ -108,11 +92,13 @@ par(mfrow=c(1,1))
 
 parameters_out=list(log_gamma=samples$pars[,"log_gamma",1],log_temp_scale=samples$pars[,"log_temp_scale",])
 
+#Plot convergence of log gamma values towards original input value
 matplot(x=c(1:n_steps_in),y=parameters_out$log_gamma,type="l",col=1,xlab="Iteration",ylab="Value",
         ylim=range(c(parameters_out$log_gamma,gen_params$log_gamma)))
 matplot(x=c(1,n_steps_in),y=rep(gen_params$log_gamma,2),type="l",lwd=2.0,lty=2,col=1,add=TRUE)
 legend("topright",c("Log gamma (estimated)", "Log gamma (input)"),lty=c(1,2),col=c(1,1))
 
+#Plot convergence of log temp_scale values towards original input values
 matplot(x=c(1:n_steps_in),y=parameters_out$log_temp_scale[,1],type="l",col=1,xlab="Iteration",ylab="Value",
         ylim=range(c(parameters_out$log_temp_scale,gen_params$log_temp_scale)))
 matplot(x=c(1:n_steps_in),y=parameters_out$log_temp_scale[,2],type="l",col=2,add=TRUE)

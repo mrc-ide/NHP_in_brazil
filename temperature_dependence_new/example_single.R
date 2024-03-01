@@ -26,60 +26,46 @@ data <- particle_filter_data(df_tidy,
 source("sir_temp_example/compare_sir_temp.R") # observation process could also appear here
 source("sir_temp_example/index_sir_temp.R")
 
-# Demonstrate that original parameters give output matching example data
-pars <- list( log_gamma = gen_params$log_gamma, log_temp_scale=gen_params$log_temp_scale, I0 = gen_params$I0, 
-              S0 = gen_params$S0, Temp=gen_params$Temp) #leave others as defaults
-
-x <- sir$new(pars=pars, time = 0, n_particles = 1, n_threads = 1, deterministic = FALSE)
-t_pts=nrow(df_tidy)
-x_res <- array(NA, dim = c(6, 1, t_pts)) #6 outputs from SIR model - time, S, I, R, cumulative cases, case incidence
-set.seed(1)
-for(step in 1:t_pts){
-  x_res[,,step] <- x$run(step)
-}
-
-df_tidy_new=df_tidy
-df_tidy_new$cases=x_res[6,1,]
-
-matplot(x=df_tidy_new$day,y=df_tidy_new$cases,type="l",col=1,xlab="Day",ylab="Cases",ylim=c(0,max(c(df_tidy$cases,df_tidy_new$cases))))
-matplot(x=df_tidy$day,y=df_tidy$cases,type="p",pch=1,col=2,add=TRUE)
-legend("topleft",c("New","Original"),col=c(1,2),lty=c(1,0),pch=c(NA,1))
-
-#
+#Create particle filter
 filter <- particle_filter$new(data, 
                               model = sir, 
                               n_particles=100,
                               compare = compare, 
                               index = index)
 
+#Set up prior probability distributions and initial, minimum and maximum values for fitted parameters
 priors <- list(pmcmc_parameter("log_gamma", initial = log(0.25), min = log(0.05), max = log(0.5), prior = function(p)
                                pnorm(p,mean=log(0.1),sd=1,log=TRUE)),
                pmcmc_parameter("log_temp_scale", initial = log(1.5e-5), min = log(1.0e-5), max = log(1.0e-3), prior = function(p)
                                pnorm(p,mean=log(1.0e-4),sd=1,log=TRUE)))
 
+#Transform function for other parameters
 make_transform <- function(I0,S0,Temp) {
   function(theta) {
-    c(list(I0 = I0, S0 = S0, Temp), 
+    c(list(I0 = I0, S0 = S0, Temp = Temp), 
       as.list(theta))
   }
 }
 
-no_params=2
-vcv <- (1e-1) ^ 2 * diag(no_params) / no_params # this is for the proposal distribution
-vcv
+#Create matrix of covariance values for varied parameters
+vcv <- (1e-1) ^ 2 * diag(2) / 2 # this is for the proposal distribution
 
+#Set up all parameters for MCMC run
 mcmc_pars <- pmcmc_parameters$new(priors, vcv, 
                                   transform=make_transform(I0 = gen_params$I0, S0 = gen_params$S0, Temp=gen_params$Temp)) 
 
+#MCMC run
 n_steps_in <- 1e3
 control <- pmcmc_control(n_steps = n_steps_in, progress = TRUE, save_trajectories=TRUE)
 samples <- pmcmc(mcmc_pars, filter, control = control)
 
+#Plot posterior likelihood progression over steps
 matplot(x=c(1:nrow(samples$probabilities)),y=samples$probabilities[,3],type="l",xlab="Iteration",ylab="Posterior likelihood")
 title("Posterior likelihood progression")
 
 burnin=0.5*n_steps_in #Value from which to begin taking trajectory case values to plot
 
+#Plot post-burn-in modelled values compared with observed data
 matplot(x=c(1:101),y=t(samples$trajectories$state["cases",c(burnin:n_steps_in),]),type="p",pch=16,cex=0.25,col=1,
         ylim=c(0,max(c(samples$trajectories$state["cases",c(burnin:n_steps_in),],df_tidy$cases))),xlab="Day",ylab="Cases")
 matplot(x=df_tidy$day,y=df_tidy$cases,type="l",lwd=2.0,col=2,add=TRUE)
