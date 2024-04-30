@@ -15,7 +15,7 @@ pop_dens <- 0.001  #Population density
 area <- c(220000, 248219) 
 pop_size <- pop_dens * area 
 log_gamma = log(0.1) #Gamma parameter (defined logarithmically to aid fitting)
-log_temp_scale=log(c(9.0e-5, 9.5e-5)) #Temperature scale parameters (defined logarithmically to aid fitting) used to calculate beta parameter
+log_temp_scale=log(c(1.2e-4, 9.5e-5)) #Temperature scale parameters (defined logarithmically to aid fitting) used to calculate beta parameter
 
 #Check R0 values
 Temp <- c(24.5, 20)
