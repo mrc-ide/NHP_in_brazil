@@ -4,10 +4,10 @@
 # TO DO (to add or to include in future version):
 # -Update population modelling to allow for population extinction or recovery (look at existing ecological models, ongoing)
 # -Incorporate introductions of individuals from outside (and outward migration)
-# -Make force of infection genus dependent
 # -Add vector model including functionality for multiple vector species
-# -Make force of infection (via beta and/or FOI_in) driven by temperature/precipitation input
 # -Change model of force of infection, latency, etc. for better short-term timescale modelling
+# -Make coefficients governing calculation of epi parameters from temp/precip genus dependent
+# -Make calculation of epi parameters from temp/precip non-linear
 
 dt <- user() #Time increment in days
 initial(time) <- 0 #Initial value of time in days
@@ -25,7 +25,6 @@ t_incubation <- user() #Length in days of yellow fever incubation period in mosq
 t_latent[] <- user() #Length in days of latent period in NHPs exposed to yellow fever
 t_infectious[] <- user() #Length of infectious period in NHPs with yellow fever
 ifr[] <- user() #Infection fatality rate
-FOI_in[] <- user() 
 mu[] <- user() #Rate of population turnover by day (birth rate/death rate, assumed equal for stable population)
 n_gen <- user() #Number of genera to look at
 
@@ -40,9 +39,9 @@ FOI_max <- 1.0 #Upper threshold for total force of infection to avoid more infec
 rate1[1:n_gen] <- dt/(t_incubation+t_latent[i]) #Rate of transference E->I
 rate2[1:n_gen] <- dt/t_infectious[i] #Rate of transference I->R
 
-beta <- 0 #TBA #Time-varying beta parameter for transmission
-FOI_in <- 0 #TBA #Time-varying force of infection (per day) for outside introduction
-FOI_sum <-  min(FOI_max,dt*(((beta[step+1]*sum(I))/sum(P)) + FOI_in[step+1])) #Total force of infection
+beta <- (c_beta_temp*temp[step+1])+(c_beta_precip*precip[step+1]) #Time-varying beta parameter for transmission
+FOI_in <- (c_FOI_in_temp*temp[step+1])+(c_FOI_in_precip*precip[step+1]) #Time-varying force of infection (per day) for outside introduction
+FOI_sum <-  min(FOI_max,dt*(((beta*sum(I))/sum(P)) + FOI_in)) #Total force of infection
 births[1:n_gen] <- rbinom(as.integer(P[i]), mu[i]) #New births by genus
 deaths_nat[1:n_gen] <- rbinom(as.integer(P[i]), mu[i]) #New deaths by genus (excluding YF deaths)
 E_new[1:n_gen] <- rbinom(as.integer(S[i]), FOI_sum) #New exposed NHPs by genus
@@ -63,7 +62,7 @@ update(C[1:n_gen]) <- I_new[i]
 update(D[1:n_gen]) <- deaths_YF[i]
 
 #Initial values-----------------------------------------------------------------
-initial(FOI_total) <- FOI_in[1]
+initial(FOI_total) <- 0
 initial(S[1:n_gen]) <- S_0[i]
 initial(E[1:n_gen]) <- E_0[i]
 initial(I[1:n_gen]) <- I_0[i]
@@ -95,8 +94,8 @@ dim(E_0) <- n_gen
 dim(I_0) <- n_gen
 dim(R_0) <- n_gen
 
-dim(beta) <- n_t_pts
-dim(FOI_in) <- n_t_pts
+dim(temp) <- n_t_pts
+dim(precip) <- n_t_pts
 dim(t_latent) <- n_gen
 dim(t_infectious) <- n_gen
 dim(ifr) <- n_gen
