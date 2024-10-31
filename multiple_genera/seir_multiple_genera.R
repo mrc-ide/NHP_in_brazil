@@ -15,12 +15,17 @@ update(time) <- time + dt
 
 #Parameters---------------------------------------------------------------------
 n_t_pts <- user() #Number of time points to be run
-beta[] <- user() #Time-varying beta parameter for transmission
+temp[] <- user() #Time-varying temperature used to calculate beta and FOI_in
+precip[] <- user() #Time-varying precipitation used to calculate beta and FOI_in
+c_beta_temp <- user() #Coefficient used to calculate temperature component of beta parameter
+c_beta_precip <- user() #Coefficient used to calculate precipitation component of beta parameter
+c_FOI_in_temp <- user() #Coefficient used to calculate temperature component of FOI_in parameter
+c_FOI_in_precip <- user() #Coefficient used to calculate precipitation component of FOI_in parameter
 t_incubation <- user() #Length in days of yellow fever incubation period in mosquito vectors [TODO: MAKE VAR BY SPECIES]
 t_latent[] <- user() #Length in days of latent period in NHPs exposed to yellow fever
 t_infectious[] <- user() #Length of infectious period in NHPs with yellow fever
 ifr[] <- user() #Infection fatality rate
-FOI_in[] <- user() #Time-varying force of infection (per day) for outside introduction
+FOI_in[] <- user() 
 mu[] <- user() #Rate of population turnover by day (birth rate/death rate, assumed equal for stable population)
 n_gen <- user() #Number of genera to look at
 
@@ -35,6 +40,8 @@ FOI_max <- 1.0 #Upper threshold for total force of infection to avoid more infec
 rate1[1:n_gen] <- dt/(t_incubation+t_latent[i]) #Rate of transference E->I
 rate2[1:n_gen] <- dt/t_infectious[i] #Rate of transference I->R
 
+beta <- 0 #TBA #Time-varying beta parameter for transmission
+FOI_in <- 0 #TBA #Time-varying force of infection (per day) for outside introduction
 FOI_sum <-  min(FOI_max,dt*(((beta[step+1]*sum(I))/sum(P)) + FOI_in[step+1])) #Total force of infection
 births[1:n_gen] <- rbinom(as.integer(P[i]), mu[i]) #New births by genus
 deaths_nat[1:n_gen] <- rbinom(as.integer(P[i]), mu[i]) #New deaths by genus (excluding YF deaths)

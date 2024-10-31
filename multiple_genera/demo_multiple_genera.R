@@ -1,23 +1,37 @@
-library(odin.dust)
+# Demonstration of SEIR non-human primate model with multiple genera
+# Epidemiological (epi) parameters calculated linearly from temperature and precipitation:
+# - beta - standard beta parameter governing new infections due to infectious individuals
+# - FOI_in - daily force of infection for new infections imported from outside
+# Epi parameters calculated from linear combination of temperature and precipitation using coefficients
+# Future version will incorporate non-linear calculation of epi parameters from temperature and precipitation
 
+#Load odin.dust and compile model-----------------------------------------------
+library(odin.dust)
 model <- odin.dust::odin_dust("multiple_genera/seir_multiple_genera.R")
 
+#Set up parameters--------------------------------------------------------------
 dt=1 #Time increment in days
 n_t_pts=7300 #Number of time points to run (beta and FOI_in must have lengths equal to n_t_pts)
-beta=rep(0.9,n_t_pts) #Beta parameter governing transmission from infectious individuals, at each time point
+temp=rep(25.0,n_t_pts) #Temperature at each time point, to be used to calculate epi parameters beta and FOI_in
+precip=rep(100,n_t_pts) #Precipitation at each time point, to be used to calculate epi parameters beta and FOI_in
+c_beta_temp=1e-4 #Coefficient used to calculate temperature component of beta parameter
+c_beta_precip=1e-6 #Coefficient used to calculate precipitation component of beta parameter
+c_FOI_in_temp=1e-4 #Coefficient used to calculate temperature component of FOI_in parameter
+c_FOI_in_precip=1e-6 #Coefficient used to calculate precipitation component of FOI_in parameter
 t_incubation=5 #Incubation time in vectors (currently no vector species separation)
 t_latent=c(5,5) #Latent period in NHPs by genus
 t_infectious=c(5,5)  #Infectious period in NHPs by genus
 ifr=c(0.1,0.5) #Infection fatality rate by genus
-FOI_in=rep(1.0e-5,n_t_pts) #Force of infection (per day) for importation of infections, at each time point
 mu=c(0.1,0.1)/365 #Birth/death rate per unit population per day (1/lifespan in years divided by 365) by genus
 n_gen=2 #Number of genera (vectors of input values must have lengths equal to n_gen)
 S_0=c(1000,1000) #Initial number of susceptible individuals by genus
 E_0=c(0,0) #Initial number of exposed individuals by genus
 I_0=c(0,0) #Initial number of infectious individuals by genus
 R_0=c(0,0) #Initial number of recovered individuals by genus
-pars <- list(dt=dt,n_t_pts=n_t_pts,beta=beta,t_incubation=t_incubation,t_latent=t_latent,t_infectious=t_infectious,
-             ifr=ifr,FOI_in=FOI_in,mu=mu,n_gen=n_gen,S_0=S_0,E_0=E_0,I_0=I_0,R_0=R_0)
+pars <- list(dt = dt, n_t_pts = n_t_pts, temp = temp, precip = precip, 
+             c_beta_temp = c_beta_temp, c_beta_precip = c_beta_precip, c_FOI_in_temp = c_FOI_in_temp, c_FOI_in_precip = c_FOI_in_precip, 
+             t_incubation = t_incubation, t_latent = t_latent, t_infectious = t_infectious, 
+             ifr = ifr, mu = mu, n_gen = n_gen, S_0 = S_0, E_0 = E_0, I_0 = I_0, R_0 = R_0)
 
 n_particles=1
 run <- model$new(pars = pars, time=1, n_particles=n_particles, n_threads=1, deterministic=TRUE)
