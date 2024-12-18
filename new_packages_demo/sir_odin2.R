@@ -23,3 +23,4 @@ initial(incidence) <- 0
 # Only used when comparing to observed data
 cases <- data() #Data to compare
 cases ~ Poisson(incidence) #Distribution
+# See https://mrc-ide.github.io/odin2/articles/functions.html#distribution-functions for available distributions
