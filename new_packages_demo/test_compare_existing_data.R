@@ -27,50 +27,27 @@ sir <- odin2::odin({
   # See https://mrc-ide.github.io/odin2/articles/functions.html#distribution-functions for available distributions
 })
 
-# SETTING UP AND RUNNING MODEL--------------------------------------------------
-# This differs significantly from the old package versions but reading output data in particular is easier
+# ESTIMATING PARAMETER VALUES---------------------------------------------------
+# Load example incidence data to use for estimation
+data_all = read.csv(file = "new_packages_demo/cases_per_state_pnh_sp_mg_pr.csv", header=TRUE)
+data=data.frame(time=data_all$day,cases=data_all$cases_A)
 
 # Creating a list of input parameter values 
 pars <- list(N = 1000, I0 = 10, beta = 0.2, gamma = 0.1)
 
 # Setting up the model
-# Note the parameter dt - this defines the time interval of each calculation step
-# dt can be in any units but must have value 1 or less and be the inverse of an integer; here dt = 1 day
-# For more flexibility (e.g. calculation steps 5 days apart), dt can have alternative units with a separate time interval defined
-# Model can be set to deterministic mode by setting deterministic = TRUE
-# Parameter seed can be used to produce reproducible stochastic output; set to NULL to randomize
-# Parameter preserve_particle_dimension is set to TRUE so that output has same dimensionality even if n_particles = 1
 sys <- dust2::dust_system_create(generator = sir, pars = pars, time = 0, dt = 1, deterministic = FALSE, 
                                  n_particles = 1, n_threads = 1, seed = 1, preserve_particle_dimension = TRUE)
 
 # Set up time sequence for output data points
-# The output time sequence has the same units as the calculation time interval dt
-# Note that the separation of the output time points needs to be compatible with dt
-# For example, if dt = 1, the output time sequence cannot have fractional points
-t <- seq(1, 100, by = 1) 
+t <- seq(1, nrow(data), by = 1) 
 
 # Initialize model to starting conditions
 dust2::dust_system_set_state_initial(sys = sys)
 
 # Run model over time sequence
-# Note that if you want to re-run with a different time sequence, you must go back and re-run from line 63
-# Output is an array with dimensions (number of output values, number of particles, number of time points)
-# If n_particles=1 and preserve_particle_dimension = FALSE in sys, y has dimensions (number of output values, number of time points)
-# This can be awkward for data handling, so we set preserve_particle_dimension = TRUE
 y <- dust2::dust_system_simulate(sys = sys, times = t)
 dim(y)
-
-# Convert model output to labelled values
-results <- dust2::dust_unpack_state(obj = sys, state = y)
-
-#Plot SIR on graph
-matplot(x = t, y = t(results$S), type="p", pch = 16, col=2, xlab = "Day", ylab = "", ylim=c(0, pars$N))
-matplot(x = t, y = t(results$I), type="p", pch = 16, col=3, add=TRUE)
-matplot(x = t, y = t(results$R), type="p", pch = 16, col=4, add=TRUE)
-legend("topright",c("S","I","R"),pch=c(16,16,16),col=c(2,3,4))
-
-#Plot incidence on graph
-matplot(x = t, y = t(results$incidence), type="p", pch = 16, col=1, xlab = "Day", ylab= "Incidence")
 
 # Obtaining individual outputs
 # Alternative to dust_unpack_state() as means of extracting labelled values
@@ -81,10 +58,6 @@ S = y[index$S,,]
 I = y[index$I,,]
 R = y[index$R,,]
 incidence = y[index$incidence,,]
-
-# ESTIMATING PARAMETER VALUES---------------------------------------------------
-# Load example incidence data to use for estimation
-data = read.csv(file = "new_packages_demo/example_data.csv", header=TRUE)
 
 # Create filter
 filter <- dust2::dust_filter_create(generator = sir, data = data, time_start = 0, n_particles = 20)
@@ -119,7 +92,7 @@ sampler <- monty::monty_sampler_random_walk(vcv = vcv)
 # Run samples to estimate parameters
 # Initial values of estimated parameters set using parameter initial
 # Initial values are another thing to vary when trying to improve estimation
-n_chains=1
+n_chains=2
 n_iterations=500
 samples <- monty::monty_sample(model = posterior,sample = sampler,n_steps = n_iterations,
                                initial = array(rep(c(0.05, 0.25), n_chains), dim=c(2, n_chains)), n_chains = n_chains)
