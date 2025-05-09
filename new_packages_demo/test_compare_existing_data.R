@@ -13,7 +13,7 @@ sir <- odin2::odin({
   update(S) <- S - n_SI
   update(I) <- I + n_SI - n_IR
   update(R) <- R + n_IR
-  update(incidence) <- n_SI+0.01
+  update(incidence) <- n_SI + 0.01 #Small value added to facilitate likelihood calculation
   
   initial(S) <- N - I0
   initial(I) <- I0
@@ -28,8 +28,11 @@ sir <- odin2::odin({
 })
 
 data_all = read.csv(file = "new_packages_demo/cases_per_state_pnh_sp_mg_pr.csv", header=TRUE)
+plot(data_all$day,data_all$cases_A)
 pts_select=c(480:1500)
+#pts_select=c(1:nrow(data_all))
 data=data.frame(time=c(1:length(pts_select)),cases=data_all$cases_A[pts_select])
+plot(data$time,data$cases)
 t <- seq(1, nrow(data), by = 1) 
 
 pars <- list(N = 1000, I0 = 10, beta = 0.2, gamma = 0.1)
@@ -74,5 +77,5 @@ dust2::dust_system_set_state_initial(sys2)
 y2 <- dust2::dust_system_simulate(sys = sys2, times = data$time)
 
 matplot(x = data$time, y = data$cases, type="l", col=1, xlab = "Day", ylab= "Incidence")
-matplot(x = data$time, y = t(y2[index2$incidence,,]), type="p", pch = 1, col=2, add=TRUE)
+matplot(x = data$time, y = t(y2[index2$incidence,,]), type="l", pch = 1, col=2, add=TRUE)
 legend("topright", c("Original data", "Data from estimated parameters"), col=c(1,2), lty=c(1,0), pch=c(NA,1))
